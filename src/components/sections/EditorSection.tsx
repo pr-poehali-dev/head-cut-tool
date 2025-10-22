@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import { removeBackground } from '@imgly/background-removal';
 
 export const EditorSection = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -53,28 +54,12 @@ export const EditorSection = () => {
     setIsProcessing(true);
     
     try {
-      const response = await fetch('https://functions.poehali.dev/26239c5b-6ab7-4649-91a0-11f4b3fabcde', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: selectedImage
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.error) {
-        alert('Ошибка: ' + data.error);
-        setIsProcessing(false);
-        return;
-      }
-      
-      setProcessedImage(data.image);
+      const blob = await removeBackground(selectedImage);
+      const url = URL.createObjectURL(blob);
+      setProcessedImage(url);
       setFinalImage(null);
     } catch (error) {
-      alert('Ошибка обработки изображения. Проверьте подключение к интернету.');
+      alert('Ошибка обработки изображения');
       console.error(error);
     } finally {
       setIsProcessing(false);
