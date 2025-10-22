@@ -3,11 +3,10 @@ import base64
 import os
 from typing import Dict, Any
 import urllib.request
-import urllib.error
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Remove background from images using remove.bg API
+    Business: Remove background from images using WithoutBG API
     Args: event - dict with httpMethod, body (base64 image)
           context - object with request_id, function_name attributes
     Returns: HTTP response with processed image
@@ -36,7 +35,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
-    api_key = os.environ.get('REMOVE_BG_API_KEY', '')
+    api_key = os.environ.get('WITHOUTBG_API_KEY', '')
     
     if not api_key:
         return {
@@ -45,7 +44,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': 'API key not configured'})
+            'body': json.dumps({'error': 'API key not configured. Please add WITHOUTBG_API_KEY secret.'})
         }
     
     body_data = json.loads(event.get('body', '{}'))
@@ -66,16 +65,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     image_bytes = base64.b64decode(image_data)
     
+    boundary = '----WebKitFormBoundary7MA4YWxkTrZu0gW'
+    body_parts = []
+    body_parts.append(f'--{boundary}'.encode())
+    body_parts.append(b'Content-Disposition: form-data; name="file"; filename="image.jpg"')
+    body_parts.append(b'Content-Type: image/jpeg')
+    body_parts.append(b'')
+    body_parts.append(image_bytes)
+    body_parts.append(f'--{boundary}--'.encode())
+    
+    body = b'\r\n'.join(body_parts)
+    
     req = urllib.request.Request(
-        'https://api.remove.bg/v1.0/removebg',
-        data=image_bytes,
+        'https://api.withoutbg.com/v1/remove-background',
+        data=body,
         headers={
-            'X-Api-Key': api_key,
-            'Content-Type': 'application/octet-stream'
+            'Content-Type': f'multipart/form-data; boundary={boundary}',
+            'X-API-Key': api_key
         }
     )
     
-    response = urllib.request.urlopen(req)
+    response = urllib.request.urlopen(req, timeout=30)
     result_bytes = response.read()
     result_base64 = base64.b64encode(result_bytes).decode('utf-8')
     
