@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Test background removal API",
+      "method": "POST",
+      "body": {
+        "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "image": "string",
+        "request_id": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
